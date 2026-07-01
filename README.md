@@ -1,11 +1,19 @@
 # holding-mcp
 
-Servidor **MCP (stdio)** que expõe o cadastro do Holding Manager (famílias, membros, imóveis, empresas/sócios, estratégia, minutas, cláusulas e templates) como **tools** para o Claude operar em linguagem natural.
+Servidor **MCP** que expõe o cadastro do Holding Manager (famílias, membros, imóveis, empresas/sócios, estratégia, minutas, cláusulas e templates) como **tools** para o Claude operar em linguagem natural.
 
 Ele **não acessa o banco direto**: envolve a API REST do `holding-backend`, reaproveitando toda a validação, isolamento por tenant, créditos e detecção de variáveis. Autentica com uma **API key** enviada no header `x-api-key`.
 
+Roda em **dois transportes** com o mesmo conjunto de 54 tools:
+
+- **stdio** (`build/index.js`) — processo local, para **Claude Code**.
+- **HTTP remoto** (`build/http.js`) — servidor hospedado, para **Claude web / Cowork** como *custom connector*. No ar em `https://mcp.holding.bravy.com.br/mcp` (ver §3b).
+
 ```
-Claude Code  ──stdio──▶  holding-mcp  ──HTTP (x-api-key)──▶  holding-backend (NestJS)  ──▶  PostgreSQL
+Claude Code   ──stdio──▶ holding-mcp (local)  ─┐
+                                               ├─ HTTP (x-api-key) ─▶ holding-backend (NestJS) ─▶ PostgreSQL
+Claude web/   ──HTTPS──▶ mcp.holding... (remoto)┘
+Cowork
 ```
 
 ---
@@ -69,6 +77,36 @@ claude mcp add holding -s project \
 > Produção: `https://api.holding.bravy.com.br`. Use `http://localhost:3001` só se estiver rodando o backend localmente.
 
 Substitua `<ABS>` pelo caminho absoluto. **Não versione a key**: no `.mcp.json` use `"${HOLDING_API_KEY}"` e mantenha o valor real no `.env`/secret.
+
+Sem clonar (pega a versão mais recente do GitHub e builda sozinho via `prepare`):
+
+```bash
+claude mcp add holding \
+  -e HOLDING_API_URL=https://api.holding.bravy.com.br \
+  -e HOLDING_API_KEY=hm_xxx \
+  -- npx -y github:tiago1002bravy/holding-mcp
+```
+
+---
+
+## 3b. Modo remoto HTTP (Claude web / Cowork)
+
+O stdio só funciona no Claude Code (processo local). Para o **Claude web / Cowork** (nuvem, não sobe processo local) há o transporte **HTTP remoto** (`src/http.ts`), já hospedado:
+
+- **URL do conector:** `https://mcp.holding.bravy.com.br/mcp`
+- **Auth:** sua chave `hm_...` como `Authorization: Bearer hm_...`. Se a UI do conector não aceitar header/token, use a chave embutida no caminho: `https://mcp.holding.bravy.com.br/hm_sua_chave/mcp`.
+
+Funciona em **modo stateless**: cada request cria um `HoldingClient`/`McpServer` novos com a key daquele cliente. A key é aceita de 4 formas — `Authorization: Bearer`, header `x-api-key`, no path `/<hm_...>/mcp`, ou `?api_key=`. A URL do backend (`HOLDING_API_URL`) é fixa no servidor.
+
+**Rodar você mesmo** (Docker; o `Dockerfile` roda o HTTP por padrão, porta `3005`):
+
+```bash
+docker compose up http          # sobe o serviço HTTP local em :3005
+# ou:
+HOLDING_API_URL=https://api.holding.bravy.com.br npm run start:http
+```
+
+Health check: `GET /health`. Deploy de produção: Coolify (app `holding-mcp`), domínio `mcp.holding.bravy.com.br`, env `HOLDING_API_URL`.
 
 ### Variáveis de ambiente
 
@@ -166,5 +204,7 @@ Nomenclatura `recurso_acao`. Campos seguem os DTOs do backend (snake_case). IDs 
 
 - `src/config.ts` — lê `HOLDING_API_URL` / `HOLDING_API_KEY`.
 - `src/http-client.ts` — `HoldingClient` (`get/post/patch/put/del` + `postForm` para multipart sem arquivos). Injeta `x-api-key`, desembrulha o envelope `{ success, data }` da API, e converte erros (`{ error: { message, details } }`) em `Error` legível. Remove chaves `undefined` (o backend usa `forbidNonWhitelisted`).
+- `src/server.ts` — `createServer(client)`: monta o `McpServer` e registra todas as tools. Reutilizado pelos dois transportes.
 - `src/tools/*.ts` — um módulo por recurso; cada um exporta `register<Recurso>Tools(server, client)`.
-- `src/index.ts` — instancia o `McpServer`, registra as tools e conecta via `StdioServerTransport`. Logs só em `stderr`.
+- `src/index.ts` — transporte **stdio**: instancia via `createServer` e conecta com `StdioServerTransport`. Logs só em `stderr`.
+- `src/http.ts` — transporte **HTTP remoto**: Express + `StreamableHTTPServerTransport` (stateless), server/client novos por request com a key extraída do request. Rotas `/mcp`, `/:apiKey/mcp`, `/health`.

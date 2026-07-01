@@ -1,28 +1,51 @@
-# docker-compose para empacotar/rodar o holding-mcp como container.
+# docker-compose do holding-mcp. Dois serviços, mesma imagem:
 #
-# O MCP é um servidor stdio (não é um serviço HTTP que fica escutando porta).
-# Por isso o uso normal NÃO é `docker compose up`, e sim registrar o container
-# como comando do MCP no Claude Code:
+#   - holding-mcp  → transporte STDIO (Claude Code). Não escuta porta.
+#   - http         → transporte HTTP remoto (Claude web / Cowork). Escuta em 3005.
 #
-#   claude mcp add holding -- docker run -i --rm \
-#     -e HOLDING_API_URL=https://api.suaholding.com \
-#     -e HOLDING_API_KEY=hm_xxx \
-#     holding-mcp:latest
-#
-# Este compose serve para BUILDAR a imagem e para teste local:
+# STDIO — buildar a imagem e testar localmente:
 #   docker compose build
 #   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
 #     docker compose run --rm -T holding-mcp
+#
+#   Uso real no Claude Code (registra o container como comando do MCP):
+#     claude mcp add holding -- docker run -i --rm \
+#       -e HOLDING_API_URL=https://api.holding.bravy.com.br \
+#       -e HOLDING_API_KEY=hm_xxx \
+#       holding-mcp:latest node build/index.js
+#
+# HTTP remoto — subir o serviço local em :3005 (a API key vem por request, não por env):
+#   HOLDING_API_URL=https://api.holding.bravy.com.br docker compose up http
+#   curl localhost:3005/health
+#
+# Em produção o HTTP roda no Coolify (app holding-mcp, domínio mcp.holding.bravy.com.br).
 
 services:
+  # Transporte STDIO — para Claude Code.
   holding-mcp:
     build:
       context: .
       dockerfile: Dockerfile
     image: holding-mcp:latest
+    command: ["node", "build/index.js"]
     environment:
       HOLDING_API_URL: ${HOLDING_API_URL:-http://localhost:3001}
       HOLDING_API_KEY: ${HOLDING_API_KEY:?defina HOLDING_API_KEY no .env}
     stdin_open: true   # mantém STDIN aberto para o protocolo stdio
     tty: false
     restart: "no"
+
+  # Transporte HTTP remoto — para Claude web / Cowork (custom connector).
+  # A API key NÃO é env: cada request traz a sua (Bearer / x-api-key / path / query).
+  http:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: holding-mcp:latest
+    command: ["node", "build/http.js"]
+    environment:
+      HOLDING_API_URL: ${HOLDING_API_URL:-http://localhost:3001}
+      PORT: 3005
+    ports:
+      - "3005:3005"
+    restart: unless-stopped
