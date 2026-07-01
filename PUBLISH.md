@@ -34,7 +34,7 @@ Como os clientes usam `npx -y holding-mcp`, eles pegam a versão mais recente au
 
 ```bash
 claude mcp add holding \
-  -e HOLDING_API_URL=https://api.SEU-DOMINIO.com \
+  -e HOLDING_API_URL=https://api.holding.bravy.com.br \
   -e HOLDING_API_KEY=hm_a_chave_do_cliente \
   -- npx -y holding-mcp
 ```

@@ -30,7 +30,7 @@ Registre o MCP no Claude Code:
 
 ```bash
 claude mcp add holding \
-  -e HOLDING_API_URL=https://api.suaholding.com \
+  -e HOLDING_API_URL=https://api.holding.bravy.com.br \
   -e HOLDING_API_KEY=hm_sua_chave_aqui \
   -- npx -y holding-mcp
 ```
@@ -53,20 +53,21 @@ famílias"* e o Claude usará a tool `family_list`.
 
 ## 3. Alternativa: rodar via Docker (sem instalar Node)
 
-Se preferir não instalar Node, use a imagem Docker (precisa apenas do Docker):
+Se preferir não instalar Node, dá para rodar via Docker (precisa apenas do Docker).
+A imagem ainda não está num registry público, então builde a partir do repositório:
 
 ```bash
-docker pull holding-mcp:latest   # ou o registry indicado pelo administrador
+git clone https://github.com/tiago1002bravy/holding-mcp.git
+cd holding-mcp
+docker build -t holding-mcp:latest .
 
 claude mcp add holding -- docker run -i --rm \
-  -e HOLDING_API_URL=https://api.suaholding.com \
+  -e HOLDING_API_URL=https://api.holding.bravy.com.br \
   -e HOLDING_API_KEY=hm_sua_chave_aqui \
   holding-mcp:latest
 ```
 
 > O `-i` é obrigatório (o MCP se comunica por STDIN/STDOUT).
-
-Para buildar a imagem localmente a partir do código: `docker compose build`.
 
 ---
 
@@ -108,12 +109,12 @@ Se você mesmo administra o Holding Manager (perfil admin), gere sua chave assim
 
 ```bash
 # 1. login → copie o access_token retornado
-curl -sX POST https://api.suaholding.com/auth/login \
+curl -sX POST https://api.holding.bravy.com.br/auth/login \
   -H 'content-type: application/json' \
   -d '{"email":"voce@holding.com","password":"sua_senha"}'
 
 # 2. gere a chave (o valor "hm_..." aparece UMA ÚNICA VEZ — guarde-o)
-curl -sX POST https://api.suaholding.com/auth/api-tokens \
+curl -sX POST https://api.holding.bravy.com.br/auth/api-tokens \
   -H 'content-type: application/json' \
   -H 'authorization: Bearer <ACCESS_TOKEN>' \
   -d '{"name":"meu-claude"}'

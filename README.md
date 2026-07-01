@@ -61,10 +61,12 @@ Registrar no Claude Code (escopo `project` grava `.mcp.json` versionável):
 
 ```bash
 claude mcp add holding -s project \
-  -e HOLDING_API_URL=http://localhost:3001 \
+  -e HOLDING_API_URL=https://api.holding.bravy.com.br \
   -e HOLDING_API_KEY=hm_xxx \
   -- node <ABS>/holding-mcp/build/index.js
 ```
+
+> Produção: `https://api.holding.bravy.com.br`. Use `http://localhost:3001` só se estiver rodando o backend localmente.
 
 Substitua `<ABS>` pelo caminho absoluto. **Não versione a key**: no `.mcp.json` use `"${HOLDING_API_KEY}"` e mantenha o valor real no `.env`/secret.
 
