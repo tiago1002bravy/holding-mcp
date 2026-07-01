@@ -32,7 +32,7 @@ Registre o MCP no Claude Code:
 claude mcp add holding \
   -e HOLDING_API_URL=https://api.holding.bravy.com.br \
   -e HOLDING_API_KEY=hm_sua_chave_aqui \
-  -- npx -y holding-mcp
+  -- npx -y github:tiago1002bravy/holding-mcp
 ```
 
 - `HOLDING_API_URL` — endereço do servidor do Holding Manager (informado pelo administrador).
@@ -128,7 +128,7 @@ curl -sX POST https://api.holding.bravy.com.br/auth/api-tokens \
 
 ## 6. Atualizar / remover
 
-- **Atualizar:** com `npx -y holding-mcp`, a versão mais recente é baixada
+- **Atualizar:** com `npx -y github:tiago1002bravy/holding-mcp`, a versão mais recente é baixada
   automaticamente. Basta reabrir o Claude Code.
 - **Remover:** `claude mcp remove holding`.
 
