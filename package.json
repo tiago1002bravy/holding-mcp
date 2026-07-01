@@ -1,0 +1,39 @@
+{
+  "name": "holding-mcp",
+  "version": "0.1.0",
+  "description": "Servidor MCP (stdio) do Holding Manager — cadastro de famílias, membros, imóveis, empresas, estratégia, minutas e cláusulas via API REST.",
+  "type": "module",
+  "bin": {
+    "holding-mcp": "./build/index.js"
+  },
+  "files": [
+    "build",
+    "docs"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "holding-manager",
+    "claude"
+  ],
+  "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^22"
+  }
+}

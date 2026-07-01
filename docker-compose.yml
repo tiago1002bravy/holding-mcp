@@ -1,0 +1,28 @@
+# docker-compose para empacotar/rodar o holding-mcp como container.
+#
+# O MCP é um servidor stdio (não é um serviço HTTP que fica escutando porta).
+# Por isso o uso normal NÃO é `docker compose up`, e sim registrar o container
+# como comando do MCP no Claude Code:
+#
+#   claude mcp add holding -- docker run -i --rm \
+#     -e HOLDING_API_URL=https://api.suaholding.com \
+#     -e HOLDING_API_KEY=hm_xxx \
+#     holding-mcp:latest
+#
+# Este compose serve para BUILDAR a imagem e para teste local:
+#   docker compose build
+#   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
+#     docker compose run --rm -T holding-mcp
+
+services:
+  holding-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: holding-mcp:latest
+    environment:
+      HOLDING_API_URL: ${HOLDING_API_URL:-http://localhost:3001}
+      HOLDING_API_KEY: ${HOLDING_API_KEY:?defina HOLDING_API_KEY no .env}
+    stdin_open: true   # mantém STDIN aberto para o protocolo stdio
+    tty: false
+    restart: "no"
