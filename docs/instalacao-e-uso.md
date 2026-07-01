@@ -51,6 +51,28 @@ famílias"* e o Claude usará a tool `family_list`.
 
 ---
 
+## 2b. Usar no Claude web / Cowork (conector remoto)
+
+O modo acima (npx local) só funciona no **Claude Code**, que roda um processo na
+sua máquina. Para usar no **Claude web / Cowork** (que roda na nuvem), existe uma
+versão **remota HTTP** hospedada, cadastrada como *custom connector*:
+
+- **URL do conector:** `https://mcp.holding.bravy.com.br/mcp`
+- **Autenticação:** sua chave `hm_...` — enviada como `Authorization: Bearer hm_...`.
+
+Ao adicionar um conector customizado no Claude, informe essa URL e a chave. Se a
+interface **não** permitir cabeçalho/token, use a URL com a chave embutida no
+caminho:
+
+```
+https://mcp.holding.bravy.com.br/hm_sua_chave_aqui/mcp
+```
+
+> A URL do backend é fixa no servidor remoto; você só precisa da sua chave.
+> Não é preciso instalar Node nem nada localmente para esse modo.
+
+---
+
 ## 3. Alternativa: rodar via Docker (sem instalar Node)
 
 Se preferir não instalar Node, dá para rodar via Docker (precisa apenas do Docker).
